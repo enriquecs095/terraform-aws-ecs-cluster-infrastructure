@@ -44,6 +44,27 @@ variable "subnets" {
   }))
 }
 
+variable "asg" {
+  description = "ASG of the IAC"
+  type = object({
+    launch_template = object({
+      name            = string
+      instance_type   = string
+      key_pair        = string
+      ami_name        = string
+      security_groups = list(string)
+      user_data       = string
+    })
+    autoscaling_group = object({
+      name                    = string
+      desired_capacity        = number
+      max_size                = number
+      min_size                = number
+      vpc_zone_identifier     = list(string)
+      protected_from_scale_in = bool
+    })
+  })
+}
 
 variable "load_balancer" {
   description = "Load balancer of the IAC"
@@ -54,11 +75,10 @@ variable "load_balancer" {
     subnets            = list(string)
     security_groups    = list(string)
     lb_target_group = object({
-      name        = string
-      port        = string
-      vpc_id      = string
-      protocol    = string
-      target_type = string
+      name     = string
+      port     = string
+      vpc_id   = string
+      protocol = string
       health_check = object({
         enable   = bool
         path     = string
@@ -97,47 +117,30 @@ variable "acm_certificate" {
   })
 }
 
-variable "ecs_fargate" {
-  description = "ECS Fargate of the IAC"
+variable "ecs" {
+  description = "ECS of the IAC"
   type = object({
-    ecs_cluster_name = string
-    ecs_service = object({
-      name          = string
-      desired_count = number
-      launch_type   = string
-      network_configuration = object({
-        security_groups  = list(string)
-        subnets          = list(string)
-        assign_public_ip = bool
-      })
-      load_balancer = object({
-        container_name = string
-        container_port = string
-      })
-    })
+    cluster_name = string
     task_definition = object({
-      name                     = string
-      family                   = string
-      network_mode             = string
-      requires_compatibilities = list(string)
-      cpu                      = number
-      memory                   = number
+      family = string
       container_definitions = object({
-        image       = string
-        cpu         = number
-        memory      = number
-        name        = string
-        networkMode = string
+        name      = string
+        image     = string
+        cpu       = number
+        memory    = number
+        essential = bool
         portMappings = object({
           containerPort = number
           hostPort      = number
         })
       })
-      
+    })
+    ecs_service = object({
+      name          = string
+      desired_count = number
     })
   })
 }
-
 
 variable "waf" {
   description = "WAF of the IAC"
